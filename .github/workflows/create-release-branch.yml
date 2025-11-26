@@ -1,0 +1,49 @@
+name: Create release branch
+
+on:
+  workflow_dispatch:
+    inputs:
+      date:
+        description: "Release date (YYYYMMDD)"
+        required: true
+        type: string
+
+permissions:
+  contents: write  # ブランチ作成に必要
+
+jobs:
+  create-branch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate input
+        run: |
+          DATE="${{ inputs.date }}"
+          if ! [[ "$DATE" =~ ^[0-9]{8}$ ]]; then
+            echo "date must be YYYYMMDD"
+            exit 1
+          fi
+
+      - name: Create branch release/YYYYMMDD from default branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DATE: ${{ inputs.date }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          BRANCH="release/${DATE}"
+
+          # デフォルトブランチ名を取得
+          DEFAULT_BRANCH=$(gh api repos/$REPO --jq .default_branch)
+
+          echo "Default branch: $DEFAULT_BRANCH"
+          echo "Creating: $BRANCH"
+
+          # デフォルトブランチの最新SHAを取得
+          SHA=$(gh api repos/$REPO/git/ref/heads/$DEFAULT_BRANCH --jq .object.sha)
+
+          # ブランチ作成
+          gh api -X POST repos/$REPO/git/refs \
+            -f ref="refs/heads/$BRANCH" \
+            -f sha="$SHA"
+
+          echo "Created branch $BRANCH at $SHA"
