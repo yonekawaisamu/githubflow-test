@@ -65,3 +65,11 @@
 Actions にて、`main` には `develop` しかマージできないように制限する。
 
 ---
+
+## 緊急時のバグ修正フロー（Hotfix）
+本番環境（`main`）で致命的なバグが発生し、未リリースの `develop` の内容を含めずに修正だけを即時反映させたい場合の手順です。
+
+**`main`** から直接 `hotfix/xxx` ブランチを作成する。バグを修正し、コミット＆プッシュする。  
+`hotfix/xxx` から **`main`** に向けてPRを作成し、マージする。先祖返りを防ぐため、同じ修正を `develop` にも反映させる。    
+手順: `main`（または `hotfix/xxx`）から **`develop`** に向けてもPRを作成し、マージして同期しておく。  
+`Branch protection rules` で、 `Require branches to be up to date before merging` を `ON` にするので、同じ修正を `develop` に反映し忘れても、`develop` から `main` に向けてマージできない状態になるので、ミスは起きない想定です。
